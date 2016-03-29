@@ -1,0 +1,23 @@
+# Ansible Managed: Project: {{ proj_name }}
+#
+#
+
+server {
+
+    listen 80;
+
+    server_name {{ nginx_domain }};
+    client_max_body_size 10M;
+    keepalive_timeout    15;
+    root            {{ nginx_www_root }};
+    location / {
+        root            {{ nginx_www_root }};
+    }
+
+    location ~ \.php$ {
+                    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+                    fastcgi_pass unix:/var/run/php5-fpm.sock;
+                    fastcgi_index index.php;
+                    include fastcgi_params;
+            }
+}

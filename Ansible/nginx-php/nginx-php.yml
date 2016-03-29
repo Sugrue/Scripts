@@ -1,0 +1,75 @@
+---
+- name: Deploy ngnix with php
+  hosts: localhost
+  vars:
+    proj_name: "basic ngnix with php deployment"
+    user: "{{ ansible_ssh_user }}"
+
+    nginx_domain: "localhost"
+    nginx_www_root: "/www/"
+    nginx_config_template: "/vagrant/templates/nginx.conf.j2"
+    nginx_config_site_enabled: "/etc/nginx/sites-enabled/nginx.conf"
+    nginx_config_site_available: "/etc/nginx/sites-available/nginx.conf"
+    nginx_index_php_src: "/vagrant/files/index.php"
+    nginx_index_php_dest: "{{ nginx_www_root }}/index.php"
+
+    dev_information:
+      - "###########################################"
+      - "~NGINX INFORMATION~"
+      - "Web Domain: {{ nginx_domain }}"
+      - "WWW Root: {{ nginx_www_root }}"
+      - "###########################################"
+
+  tasks:
+    - name: Installing Apt Packages
+      apt:
+        pkg={{ item }}
+        update_cache=yes
+        cache_valid_time=3600
+      with_items:
+        - nginx
+        - php5-common
+        - php5-cli
+        - php5-fpm
+      sudo: true
+
+    - name: "Create Directory"
+      file: path=/www state=directory mode=0755
+      sudo: yes
+
+    - name: "Copying index.php w/ phpversion()"
+      copy: src={{ nginx_index_php_src }} dest={{ nginx_index_php_dest }} owner={{ user }} group={{ user }} mode=0755
+      sudo: yes
+
+    - name: "Generate NGINX Config - Sites-Enabled"
+      template: src={{ nginx_config_template }} dest={{ nginx_config_site_available }}
+      sudo: true
+      notify: restart nginx
+
+    - name: "Enable the NGINX Config file - Sites-Avilable Link"
+      file:
+        src: "{{ nginx_config_site_available }}"
+        dest: "{{ nginx_config_site_enabled }}"
+        state: link
+      sudo: true
+      notify: restart nginx
+
+    - name: "Remove The Default Nginx Config File - Sites-Enabled"
+      file: path=/etc/nginx/sites-enabled/default state=absent
+      notify: restart nginx
+      sudo: true
+
+    - name: "Remove The Default Nginx Config File - Sites-Availabe"
+      file: path=/etc/nginx/sites-available/default state=absent
+      notify: restart nginx
+      sudo: true
+
+
+    - name: "Useful Information"
+      debug: var=dev_information
+
+  handlers:
+
+    - name: restart nginx
+      service: name=nginx state=restarted
+      sudo: true
