@@ -216,3 +216,8 @@ pip-log.txt
 .mr.developer.cfg
 
 .idea/
+.idea/*
+*.idea/
+.secret*
+*.tar.gz
+.vagrant/

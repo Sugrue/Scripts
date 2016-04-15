@@ -1,0 +1,20 @@
+---
+- name: Puppet Razor
+  hosts: localhost
+  vars:
+    proj_name: "Puppet Razor Deployment"
+    user: "{{ ansible_ssh_user }}"
+
+
+
+    dev_information:
+      - "###########################################"
+      - "###########################################"
+
+  tasks:
+
+    - name: Copying Tar ball
+      copy: src=/vagrant/puppet-enterprise-* dest=~/
+
+    - name: Extracting Installation Files
+      unarchive: src=~/puppet-enterprise-* dest=~/
