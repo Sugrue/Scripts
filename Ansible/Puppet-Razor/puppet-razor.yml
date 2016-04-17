@@ -4,8 +4,22 @@
   vars:
     proj_name: "Puppet Razor Deployment"
     user: "{{ ansible_ssh_user }}"
+    puppet_razor_package: "puppet-enterprise-2015.3.3-ubuntu-14.04-amd64"
 
+    jruby: "/jruby"
 
+    razor_path: "/Razor-Server"
+    razor_db_user: "razor"
+    razor_db_pass: "razorpassword"
+    razor_db: "razor_prd"
+
+    razor_config_template: "/vagrant/config.yaml.j2"
+    razor_config: "{{ razor_path }}/config.yaml"
+
+    razor_repo_store: "/var/lib/razor/repo-store"
+
+    pg_hba_config: "/etc/postgresql/9.3/main/pg_hba.conf"
+    pg_hba_template: "/vagrant/pg_hba.conf.j2"
 
     dev_information:
       - "###########################################"
@@ -13,8 +27,73 @@
 
   tasks:
 
-    - name: Copying Tar ball
-      copy: src=/vagrant/puppet-enterprise-* dest=~/
+    - name: Installing Apt Packages
+      apt:
+        pkg={{ item }}
+        update_cache=yes
+        cache_valid_time=3600
+      with_items:
+        - git
+        - postgresql
+        - python-psycopg2
+        - libarchive-dev
+      become: true
 
-    - name: Extracting Installation Files
-      unarchive: src=~/puppet-enterprise-* dest=~/
+    - name: Download jruby 1.7.13
+      get_url: url="https://s3.amazonaws.com/jruby.org/downloads/1.7.13/jruby-bin-1.7.13.tar.gz" dest=/tmp/
+
+    - name: "Create Folder {{ jruby }}"
+      file: path={{ jruby }} state=directory
+      become: true
+
+    - name: Extract jruby 1.7.13
+      unarchive: src=/tmp/jruby-bin-1.7.13.tar.gz dest={{ jruby }}
+      become: true
+
+    - name: Install Bundler
+      command: "{{ jruby }}/jruby-1.7.13/bin/jruby -S gem install bundle"
+      become: true
+
+    - name: Update pg_hba.Config
+      template: src={{ pg_hba_template }} dest={{ pg_hba_config }}
+      become: true
+
+    - name: Create Postgressql DB
+      postgresql_db: name={{ razor_db }}
+      become_user: postgres
+      become: true
+
+    - name: Create Postgressql Razor User
+      postgresql_user: db={{ razor_db }} name={{ razor_db_user }} password={{ razor_db_pass }} priv=ALL
+      become_user: postgres
+      become: true
+      notify: restart postgres
+
+    - name: Clone Razor-Server Git repo
+      git: repo=https://github.com/puppetlabs/razor-server.git clone=yes dest={{ razor_path }}
+      become: true
+
+    - name: Install Razor-Server
+      command: "{{ jruby }}/jruby-1.7.13/bin/jruby -S bundle install"
+      args:
+        chdir: "{{ razor_path }}"
+
+    - name: "Generate Razor Config"
+      template: src={{ razor_config_template }} dest={{ razor_config }}
+      become: true
+
+    - name: "Create Repo-Store"
+      file: path={{ razor_repo_store }} state=directory
+      become: true
+
+    - name: "Start Torquebox"
+      command: "{{ item }}"
+      with_items:
+        - "{{ jruby }}/jruby-1.7.13/bin/jruby -S {{ razor_path }}/bin/razor-admin -e production migrate-database"
+        - "{{ jruby }}/jruby-1.7.13/bin/jruby -S torquebox deploy --env production"
+        - "{{ jruby }}/jruby-1.7.13/bin/jruby -S torquebox run --bind-address 0.0.0.0"
+      become: true
+
+  handlers:
+    - name: restart postgres
+      service: name=postgres state=restarted
