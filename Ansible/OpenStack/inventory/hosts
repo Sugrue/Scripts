@@ -1,0 +1,53 @@
+[compute1]
+Compute1.OpenStack.Lab.Sugrue.ca  ansible_user=localadmin ansible_ssh_pass=C1sco!23 ansible_become_pass=C1sco!23 ansible_ssh_extra_args="-A"
+
+[compute2]
+Compute2.OpenStack.Lab.Sugrue.ca  ansible_user=localadmin ansible_ssh_pass=C1sco!23 ansible_become_pass=C1sco!23 ansible_ssh_extra_args="-A"
+
+[controller1]
+Controller1.OpenStack.Lab.Sugrue.ca   ansible_user=localadmin ansible_ssh_pass=C1sco!23 ansible_become_pass=C1sco!23 ansible_ssh_extra_args="-A"
+
+[controller2]
+Controller2.OpenStack.Lab.Sugrue.ca   ansible_user=localadmin ansible_ssh_pass=C1sco!23 ansible_become_pass=C1sco!23 ansible_ssh_extra_args="-A"
+
+[compute1:vars]
+
+[compute2:vars]
+
+[controller1:vars]
+vrrp_priority=200
+wsrep-new-cluster="-- wsrep-new-cluster"
+
+[controller2:vars]
+vrrp_priority=150
+wsrep-new-cluster=""
+
+[database-servers:children]
+controller1
+controller2
+
+[rabbitmq:children]
+rabbitmq-master
+rabbitmq-slave
+
+[rabbitmq-master:children]
+controller1
+
+[rabbitmq-slave:children]
+controller2
+
+[keystone:children]
+controller1
+controller2
+
+[all-nodes:children]
+controllers
+compute
+
+[controllers:children]
+controller1
+controller2
+
+[compute:children]
+compute1
+compute2

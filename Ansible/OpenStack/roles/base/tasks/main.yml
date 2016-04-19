@@ -1,0 +1,22 @@
+---
+- name: Add Repository
+  command: apt-add-repository cloud-archive:mitaka -y
+  become: true
+
+- name: Install Base Apt Packages
+  apt: pkg={{ item }} update_cache=yes cache_valid_time=3600 force=yes
+  become: true
+  with_items:
+    - chrony
+    - software-properties-common
+    - python-openstackclient
+    - memcached
+    - python-memcache
+    - python-pip
+    - python-dev
+    - python-mysqldb
+
+- name: Configure Chrony
+  template: src=chrony.conf.j2 dest=/etc/chrony/chrony.conf
+  notify: restart chrony
+  become: true

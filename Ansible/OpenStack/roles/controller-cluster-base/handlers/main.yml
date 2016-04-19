@@ -1,0 +1,13 @@
+---
+# handlers file for controller-cluster-base
+- name: update sysctl
+  command: "sysctl -p"
+  become: true
+
+- name: restart keepalived
+  service: name=keepalived state=restarted
+  become: true
+
+- name: restart haproxy
+  service: name=haproxy state=restarted
+  become: true

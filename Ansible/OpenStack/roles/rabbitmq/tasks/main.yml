@@ -1,0 +1,56 @@
+---
+# tasks file for rabbitmq
+- name: Install RabbitMQ Apt Packages
+  apt: pkg={{ item }} update_cache=yes cache_valid_time=3600 force=yes
+  become: true
+  with_items:
+    - rabbitmq-server
+
+- name: resetting rabbitmq
+  command: "rabbitmqctl reset"
+  become: true
+  ignore_errors: yes
+
+- name: Ensure rabbitmq app is stopped
+  command: "rabbitmqctl stop_app"
+  become: true
+  ignore_errors: yes
+
+- name: Update Rabbitmq-env.conf
+  template: src=rabbitmq-env.conf.j2 dest=/etc/rabbitmq/rabbitmq-env.conf
+  become: true
+
+- name: Copy Cookie from primary
+  fetch: src=/var/lib/rabbitmq/.erlang.cookie dest=/tmp/ flat=yes
+  when: "inventory_hostname in groups['rabbitmq-master']"
+  become: true
+
+- name: Synchronizing Cookie
+  copy: src=/tmp/.erlang.cookie dest=/var/lib/rabbitmq/.erlang.cookie
+  become: true
+
+- name: Start Primary RabbitMQ
+  command: "rabbitmqctl start_app"
+  when: inventory_hostname in groups['rabbitmq-master']
+  become: true
+
+- name: Join Primary RabbitMQ
+  command: "rabbitmqctl join_cluster rabbit@{{ rabbitmq_primary_sname }}"
+  when: inventory_hostname in groups['rabbitmq-slave']
+  become: true
+  ignore_errors: yes
+
+- name: Start RabbitMQ
+  command: "rabbitmqctl start_app"
+  when: inventory_hostname in groups['rabbitmq-slave']
+  become: true
+
+- name: Add RabbitMQ User
+  rabbitmq_user:  user={{ RABBIT_USER }}
+                  password={{ RABBIT_PASS }}
+                  vhost=/
+                  configure_priv=.*
+                  read_priv=.*
+                  write_priv=.*
+                  state=present
+  become: true

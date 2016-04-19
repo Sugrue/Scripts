@@ -1,0 +1,56 @@
+---
+#tasks file for database
+- name: Add MariaDB Repository Key
+  apt_key: keyserver="hkp://keyserver.ubuntu.com:80" id=0xcbcb082a1bb943db
+  become: true
+
+- name: Adding MariaDB Repository
+  apt_repository: repo='deb http://mirror.jmu.edu/pub/mariadb/repo/5.5/ubuntu trusty main' state=present
+  become: true
+
+- name: Install Database Controller Apt Packages
+  apt: pkg={{ item }} update_cache=yes
+  become: true
+  with_items:
+    - mariadb-galera-server-5.5
+    - galera
+    - rsync
+
+- name: Shutting down MariaDB
+  service: name=mysql state=stopped
+  become: true
+
+- name: Apply Maria Cluster Configs
+  template: src=cluster.cnf.j2 dest=/etc/mysql/conf.d/cluster.cnf
+  become: true
+
+- name: Create Temp copy of debian.cnf
+  fetch: src=/etc/mysql/debian.cnf dest=/tmp/ flat=yes
+  run_once: true
+  become: true
+
+- name: Synchronizing Maintenance Configs
+  copy: src=/tmp/debian.cnf dest=/etc/mysql/debian.cnf
+  become: true
+
+- name: Configure Bind IP
+  template: src=my.cnf.j2 dest=/etc/mysql/my.cnf
+  become: true
+
+- name: Starting MariaDB Cluster Primary Node
+  service: name=mysql state=started arguments="--wsrep-new-cluster"
+  run_once: true
+  become: true
+
+- name: Allow SQL Connections from other controllers
+  iptables: chain=INPUT source={{ item }} jump=ACCEPT protocol=TCP destination_port=3306
+  become: yes
+  with_items: groups['controllers']
+
+- name: Starting MariaDB Cluster
+  service: name=mysql state=started
+  become: true
+
+- name: Create HAProxy Check Account
+  mysql_user: name='haproxy_check' host={{ ansible_eth0["ipv4"]["address"] }} state=present password=""
+  become: true

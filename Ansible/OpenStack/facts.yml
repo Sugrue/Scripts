@@ -1,0 +1,60 @@
+localhost | SUCCESS => {
+    "hostvars['localhost']": {
+        "ansible_connection": "local", 
+        "ansible_python_interpreter": "/usr/bin/python", 
+        "ansible_version": {
+            "full": "2.0.1.0", 
+            "major": 2, 
+            "minor": 0, 
+            "revision": 1, 
+            "string": "2.0.1.0"
+        }, 
+        "group_names": [
+            "ungrouped"
+        ], 
+        "groups": {
+            "all": [
+                "localhost", 
+                "Controller1.OpenStack.Lab.Sugrue.ca", 
+                "Controller2.OpenStack.Lab.Sugrue.ca", 
+                "Compute1.OpenStack.Lab.Sugrue.ca", 
+                "Compute2.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "all-nodes": [
+                "Controller1.OpenStack.Lab.Sugrue.ca", 
+                "Controller2.OpenStack.Lab.Sugrue.ca", 
+                "Compute1.OpenStack.Lab.Sugrue.ca", 
+                "Compute2.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "compute": [
+                "Compute1.OpenStack.Lab.Sugrue.ca", 
+                "Compute2.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "compute1": [
+                "Compute1.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "compute2": [
+                "Compute2.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "controller1": [
+                "Controller1.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "controller2": [
+                "Controller2.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "controllers": [
+                "Controller1.OpenStack.Lab.Sugrue.ca", 
+                "Controller2.OpenStack.Lab.Sugrue.ca"
+            ], 
+            "ungrouped": [
+                "localhost"
+            ]
+        }, 
+        "inventory_dir": "/vagrant/OpenStack/inventory", 
+        "inventory_file": "inventory/hosts", 
+        "inventory_hostname": "localhost", 
+        "inventory_hostname_short": "localhost", 
+        "omit": "__omit_place_holder__93907d91877f8548acfe96c6cac4a180db1a6840", 
+        "playbook_dir": "."
+    }
+}

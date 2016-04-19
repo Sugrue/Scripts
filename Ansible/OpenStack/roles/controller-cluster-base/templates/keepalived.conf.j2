@@ -1,0 +1,17 @@
+! Configuration File for keepalived
+! Managed by Ansible
+
+vrrp_instance Cluster {
+    state MASTER
+    interface eth0
+    virtual_router_id 1
+    priority {{ vrrp_priority }}
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass {{ VRRP_PASS }}
+    }
+    virtual_ipaddress {
+        {{ vrrp_ip }}
+    }
+}
