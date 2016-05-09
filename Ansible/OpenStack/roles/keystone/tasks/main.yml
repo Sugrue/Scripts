@@ -1,14 +1,17 @@
 ---
 # tasks file for keystone
+- name: Create KeyStone Database
+  mysql_db: name=keystone state=present
+  delegate_to: "{{ groups['database-servers'][0] }}"
+  run_once: true
+  become: true
 
 - name: Create KeyStone User (%)
-  mysql_user: name='keystone' host={{ ansible_eth0["ipv4"]["address"] }} state=present password={{ KEYSTONE_DBPASS }}
+  mysql_user: name='keystone' host={{ ansible_fqdn }} state=present password={{ KEYSTONE_DBPASS }} priv=keystone.*:ALL
   become: true
-  with_items: groups['keystone-servers']
-
-- name: Create KeyStone Database
-  mysql_user: name=keystone password={{ KEYSTONE_DBPASS }} priv=*.*:ALL state=present
-  become: true
+  delegate_to: "{{ groups['database-servers'][0] }}"
+  run_once: true
+  with_items: groups['keystone']
 
 - name: Disable Keystone auto-starting after installation
   command: 'echo "manual" > /etc/init/keystone.override'
@@ -27,7 +30,7 @@
   become: true
 
 - name: Populate identity service database
-  command: 'su -s /bin/sh -c "keystone-manage db_sync" keystone'
+  command: '/bin/sh -c "keystone-manage db_sync" keystone'
   become: true
   run_once: true
 
@@ -117,6 +120,10 @@
     - 'openstack role create user'
     - 'openstack role add --project demo --user demo user'
 
-- name: Modify Keystone-paste.ini (remove admin_token_auth frpm public/admin/v2 apis)
-  replace: dest=/etc/keystone/keystone-paste.ini regexp=" admin_token_auth " replace=""
+# - name: Modify Keystone-paste.ini (remove admin_token_auth frpm public/admin/v2 apis)
+#   replace: dest=/etc/keystone/keystone-paste.ini regexp=" admin_token_auth " replace=" "
+#   become: true
+
+- name: Drop admin-openrc in root home
+  template: src=admin-openrc.j2 dest=/root/admin-openrc
   become: true

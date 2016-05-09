@@ -1,0 +1,11 @@
+---
+# handlers file for roles/nova
+- name: restart nova
+  service: name={{ item }} state=restarted
+  become: true
+  with_items:
+    - nova-api
+    - nova-consoleauth
+    - nova-scheduler
+    - nova-conductor
+    - nova-novncproxy

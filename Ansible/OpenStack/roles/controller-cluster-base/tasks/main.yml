@@ -25,3 +25,7 @@
   template: src=haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg
   become: true
   notify: restart haproxy
+
+- name: Ensure haproxy is started
+  service: name=haproxy state=started
+  become: true

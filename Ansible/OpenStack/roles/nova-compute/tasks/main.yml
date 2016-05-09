@@ -1,0 +1,27 @@
+---
+# tasks file for role/nova-compute
+- name: Install Apt Packages
+  apt: pkg={{ item }} update_cache=yes cache_valid_time=3600
+  become: true
+  with_items:
+    - nova-compute
+
+- name: Configure Nova
+  template: src=nova.conf.j2 dest=/etc/nova/nova.conf
+  become: true
+  notify: restart nova-compute
+
+- name: Check for HW Acceleration support
+  command: "egrep -c '(vmx|svm)' /proc/cpuinfo"
+  register: HW_ACC
+  failed_when: "'error' in HW_ACC.stderr"
+  become: true
+
+- name: debug
+  debug: msg={{HW_ACC.stdout}}
+
+- name: Switch hypervisor to QEMU
+  lineinfile: dest=/etc/nova/nova-compute.conf regexp=^virt_type line="virt_type = qemu"
+  when: (HW_ACC.stdout == "0")
+  notify: restart nova-compute
+  become: true

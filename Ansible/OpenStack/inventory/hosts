@@ -40,6 +40,14 @@ controller2
 controller1
 controller2
 
+[nova-controller:children]
+controller1
+controller2
+
+[nova-compute:children]
+compute1
+compute2
+
 [all-nodes:children]
 controllers
 compute

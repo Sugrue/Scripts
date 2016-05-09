@@ -75,3 +75,53 @@ defaults
 			option forwardfor
 			server {{ groups['controllers'][0] }} {{ groups['controllers'][0] }}:35358 check
 			server {{ groups['controllers'][1] }} {{ groups['controllers'][1] }}:35358 check
+	listen Glance-9292
+			bind {{ keystone_cluster_domain }}:9292
+			mode http
+			stats enable
+			stats uri /haproxy?stats
+			balance roundrobin
+			option httpclose
+			option forwardfor
+			server {{ groups['controllers'][0] }} {{ groups['controllers'][0] }}:9293 check
+			server {{ groups['controllers'][1] }} {{ groups['controllers'][1] }}:9293 check
+	listen Nova-API-Compute-8774
+			bind {{ keystone_cluster_domain }}:8774
+			mode http
+			stats enable
+			stats uri /haproxy?stats
+			balance roundrobin
+			option httpclose
+			option forwardfor
+			server {{ groups['controllers'][0] }} {{ groups['controllers'][0] }}:8773 check
+			server {{ groups['controllers'][1] }} {{ groups['controllers'][1] }}:8773 check
+	listen Nova-API-Metadata-8775
+			bind {{ keystone_cluster_domain }}:8775
+			mode http
+			stats enable
+			stats uri /haproxy?stats
+			balance roundrobin
+			option httpclose
+			option forwardfor
+			server {{ groups['controllers'][0] }} {{ groups['controllers'][0] }}:8776 check
+			server {{ groups['controllers'][1] }} {{ groups['controllers'][1] }}:8776 check
+	listen NOVNC-6080
+			bind {{ keystone_cluster_domain }}:6080
+			mode http
+			stats enable
+			stats uri /haproxy?stats
+			balance roundrobin
+			option httpclose
+			option forwardfor
+			server {{ groups['controllers'][0] }} {{ groups['controllers'][0] }}:6081 check
+			server {{ groups['controllers'][1] }} {{ groups['controllers'][1] }}:6081 check
+	listen AMQP-5672
+			bind {{ keystone_cluster_domain }}:5672
+			mode tcp
+			stats enable
+			stats uri /haproxy?stats
+			balance roundrobin
+			option httpclose
+			option forwardfor
+			server {{ groups['controllers'][0] }} {{ groups['controllers'][0] }}:5673 check
+			server {{ groups['controllers'][1] }} {{ groups['controllers'][1] }}:5673 check

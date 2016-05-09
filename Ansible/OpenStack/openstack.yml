@@ -1,4 +1,4 @@
----
+# ---
 - name: Deploy Base Packages
   hosts: all-nodes
   vars_files:
@@ -15,6 +15,7 @@
     - role: controller-cluster-base
       vrrp_ip: 10.3.0.10
       keystone_cluster_domain: keystone.openstack.lab.sugrue.ca
+
 - name: Deploy MariaDB Cluster on Controller Nodes
   hosts: database-servers
   vars_files:
@@ -41,4 +42,20 @@
   roles:
     - role: keystone
       keystone_cluster_domain: keystone.openstack.lab.sugrue.ca
+      openstack_cluster_domain: openstack.lab.sugrue.ca
+#
+- name: Deploy Nova
+  hosts: nova-controller
+  vars_files:
+    - secrets.yml
+  roles:
+    - role: nova-controller
+      openstack_cluster_domain: openstack.lab.sugrue.ca
+
+- name: Deploy Nova-compute
+  hosts: nova-compute
+  vars_files:
+    - secrets.yml
+  roles:
+    - role: nova-compute
       openstack_cluster_domain: openstack.lab.sugrue.ca

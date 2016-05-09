@@ -1,0 +1,54 @@
+---
+# tasks file for roles/nova-controller
+- name: Create nova and nova_api Database
+  mysql_db: name={{ item }} state=present
+  delegate_to: "{{ groups['database-servers'][0] }}"
+  run_once: true
+  become: true
+  with_items:
+    - nova
+    - nova_api
+
+- name: Create Nova User (%)
+  mysql_user: name='nova' host={{ ansible_fqdn }} state=present password={{ NOVA_DBPASS }} priv="nova.*:ALL/nova_api.*:ALL"
+  become: true
+  delegate_to: "{{ groups['database-servers'][0] }}"
+  with_items: groups['nova-controller']
+
+- name: Create API Endpoints
+  command: "{{ item }}"
+  become: true
+  environment: "{{ proxy_env }}"
+  run_once: true
+  register: command_output
+  failed_when: "'error' in command_output.stderr"
+  with_items:
+    - 'openstack user create --domain default nova --password {{ NOVA_PASS }}'
+    - 'openstack service create --name nova --description "OpenStack Compute" compute'
+    - 'openstack endpoint create --region RegionOne compute public http://{{ openstack_cluster_domain }}:8774/v2.1/%\(tenant_id\)s'
+    - 'openstack endpoint create --region RegionOne compute internal http://{{ openstack_cluster_domain }}:8774/v2.1/%\(tenant_id\)s'
+    - 'openstack endpoint create --region RegionOne compute admin http://{{ openstack_cluster_domain }}:8774/v2.1/%\(tenant_id\)s'
+
+- name: Install Apt Packages
+  apt: pkg={{ item }} update_cache=yes cache_valid_time=3600
+  become: true
+  with_items:
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+
+- name: Configure Nova
+  template: src=nova.conf.j2 dest=/etc/nova/nova.conf
+  become: true
+  notify: restart-nova
+
+- name: Populate identity service database
+  command: "{{ item }}"
+  become: true
+  run_once: true
+  notify: restart nova
+  with_items:
+    - '/bin/sh -c "nova-manage api_db sync" nova'
+    - '/bin/sh -c "nova-manage db sync" nova'
