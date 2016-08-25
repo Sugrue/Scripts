@@ -1,5 +1,0 @@
----
-# handlers file for base
-- name: restart chrony
-  service: name=chrony state=restarted
-  become: true
